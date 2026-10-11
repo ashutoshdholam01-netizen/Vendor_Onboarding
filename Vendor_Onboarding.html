@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indian Vendor Onboarding & KYC Portal</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .dragover {
+      border-color: #2563eb !important;
+      background-color: #eff6ff !important;
+      transform: scale(1.005);
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableSummary, #printableSummary * {
+        visibility: visible;
+      }
+      #printableSummary {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        border: none;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-100 selection:text-brand-900">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Vendor Registration &amp; Statutory KYC Portal</h1>
+          <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">India</span>
+        </div>
+        <p class="text-[11px] text-slate-500">Statutory Compliance (PAN, GSTIN, MSME &amp; Indian Banking)</p>
+      </div>
+
+      <!-- Attending / Selection Acknowledgement Control Bar -->
+      <div class="flex items-center bg-slate-100/90 border border-slate-300 rounded-xl px-3 py-1.5 shadow-2xs">
+        <div class="mr-2">
+          <span class="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 leading-tight">Ack / Vendor Ref No:</span>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <input type="text" id="headerAckNumber" 
+              class="w-44 sm:w-48 px-2 py-1 text-xs font-mono font-bold text-brand-900 bg-white border border-slate-300 rounded-md focus:border-brand-600 focus:ring-1 focus:ring-brand-500 uppercase"
+              placeholder="e.g. VEND-2026-001"
+              oninput="syncAckNumber(this.value)"
+              title="You can edit or enter your custom Internal Vendor Reference or Token number here anytime">
+            <button type="button" onclick="generateNewAckNumber()" 
+              class="p-1 hover:bg-slate-200 rounded text-slate-600 hover:text-brand-700 transition" 
+              title="Generate new standard reference number">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+        <div class="pl-2 border-l border-slate-300 hidden md:block">
+          <span class="text-[10px] text-slate-500 block leading-tight">Status:</span>
+          <span class="text-[11px] font-semibold text-emerald-700">Attending Entry</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 md:py-8">
+
+    <!-- Stepper Navigation -->
+    <nav class="bg-white rounded-2xl border border-slate-200 shadow-xs p-3 sm:p-4 mb-7">
+      <ol class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3" id="stepperList">
+        <li class="step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer bg-brand-50 border border-brand-200" onclick="goToStep(1)">
+          <div class="step-badge w-8 h-8 rounded-lg bg-brand-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0">1</div>
+          <div class="min-w-0">
+            <p class="step-tag text-[10px] font-semibold text-brand-700 uppercase tracking-wider">Step 1</p>
+            <p class="step-name text-xs sm:text-sm font-semibold text-slate-900 truncate">Company Info</p>
+          </div>
+        </li>
+        <li class="step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-50 border border-transparent" onclick="goToStep(2)">
+          <div class="step-badge w-8 h-8 rounded-lg bg-slate-200 text-slate-600 font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0">2</div>
+          <div class="min-w-0">
+            <p class="step-tag text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Step 2</p>
+            <p class="step-name text-xs sm:text-sm font-medium text-slate-700 truncate">Tax &amp; Banking</p>
+          </div>
+        </li>
+        <li class="step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-50 border border-transparent" onclick="goToStep(3)">
+          <div class="step-badge w-8 h-8 rounded-lg bg-slate-200 text-slate-600 font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0">3</div>
+          <div class="min-w-0">
+            <p class="step-tag text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Step 3</p>
+            <p class="step-name text-xs sm:text-sm font-medium text-slate-700 truncate">KYC Uploads</p>
+          </div>
+        </li>
+        <li class="step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-50 border border-transparent" onclick="goToStep(4)">
+          <div class="step-badge w-8 h-8 rounded-lg bg-slate-200 text-slate-600 font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0">4</div>
+          <div class="min-w-0">
+            <p class="step-tag text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Step 4</p>
+            <p class="step-name text-xs sm:text-sm font-medium text-slate-700 truncate">Review &amp; Select</p>
+          </div>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Form Container -->
+    <form id="vendorForm" onsubmit="event.preventDefault(); submitVendorForm();" class="space-y-6">
+
+      <section id="step1" class="step-pane bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-xs space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="building-2" class="w-5 h-5 text-brand-600"></i>
+            Company &amp; Entity Profile
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Provide statutory commercial organization details.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="legalName">
+              Legal Entity / Registered Company Name <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="legalName" required placeholder="e.g. Acme Tech Solutions Private Limited"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between" for="tradeName">
+              <span>Trade Name / Brand Name</span>
+              <span class="text-[11px] font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Optional</span>
+            </label>
+            <input type="text" id="tradeName" placeholder="e.g. Acme Technologies"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5" for="entityType">
+              Constitution of Business / Entity Type <span class="text-rose-500">*</span>
+            </label>
+            <select id="entityType" required
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all">
+              <option value="" disabled selected>Select Business Constitution</option>
+              <option value="Private Limited Company">Private Limited Company</option>
+              <option value="Public Limited Company">Public Limited Company</option>
+              <option value="Limited Liability Partnership (LLP)">Limited Liability Partnership (LLP)</option>
+              <option value="Partnership Firm">Partnership Firm</option>
+              <option value="Proprietorship">Sole Proprietorship</option>
+              <option value="Trust / Society / NGO">Trust / Society / Section 8 NGO</option>
+              <option value="Individual / Consultant">Individual / Professional Consultant</option>
+            </select>
+          </div>
+
+          <!-- Business Registration No (CIN / LLPIN) - OPTIONAL -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between" for="cinNumber">
+              <span>Business Reg. No. (CIN / LLPIN)</span>
+              <span class="text-[11px] font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Optional</span>
+            </label>
+            <input type="text" id="cinNumber" placeholder="e.g. U72200MH2020PTC123456"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 uppercase placeholder-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all">
+          </div>
+
+          <!-- Company Website URL - OPTIONAL -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between" for="websiteUrl">
+              <span>Company Website URL</span>
+              <span class="text-[11px] font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">Optional</span>
+            </label>
+            <input type="url" id="websiteUrl" placeholder="https://www.example.in"
+              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all">
+          </div>
+        </div>
+
+        <!-- Registered Business Address -->
+        <div class="border-t border-slate-100 pt-5 space-y-4">
+          <div class="flex items-center space-x-2 text-slate-900 font-semibold text-sm">
+            <i data-lucide="map-pin" class="w-4 h-4 text-brand-600"></i>
+            <span>Registered Business Address</span>
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="registeredAddress">
+                Street, Building &amp; Unit Address <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="registeredAddress" required placeholder="Floor 4, Tower B, Business Tech Park"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="cityAddress">
+                City / District <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="cityAddress" required placeholder="e.g. Mumbai, Bengaluru"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="stateAddress">
+                State / Union Territory <span class="text-rose-500">*</span>
+              </label>
+              <select id="stateAddress" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:border-brand-600">
+                <option value="" disabled selected>Select State</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Delhi (NCT)">Delhi (NCT)</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="West Bengal">West Bengal</option>
+                <option value="Other State / UT">Other State / UT</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="pinCode">
+                PIN Code <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="pinCode" required maxlength="6" pattern="[0-9]{6}" placeholder="6-digit PIN"
+                class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm text-slate-800 focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Persons -->
+        <div class="border-t border-slate-100 pt-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-50/70 p-4 sm:p-5 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex items-center space-x-2 text-slate-900 font-semibold text-sm border-b border-slate-200 pb-2">
+                <i data-lucide="user-check" class="w-4 h-4 text-brand-600"></i>
+                <span>Primary Vendor Contact Person</span>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="primaryName">Full Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="primaryName" required placeholder="e.g. Ramesh Patel"
+                  class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1" for="primaryEmail">Official Email <span class="text-rose-500">*</span></label>
+                  <input type="email" id="primaryEmail" required placeholder="ramesh@example.in"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1" for="primaryMobile">Mobile Number <span class="text-rose-500">*</span></label>
+                  <input type="tel" id="primaryMobile" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-slate-50/70 p-4 sm:p-5 rounded-xl border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div class="flex items-center space-x-2 text-slate-900 font-semibold text-sm">
+                  <i data-lucide="receipt" class="w-4 h-4 text-brand-600"></i>
+                  <span>Accounts / Billing Contact</span>
+                </div>
+                <label class="flex items-center space-x-1.5 cursor-pointer text-xs text-brand-700 select-none">
+                  <input type="checkbox" id="sameAsPrimary" onchange="syncBillingContact(this)" class="rounded text-brand-600 border-slate-300 focus:ring-brand-500">
+                  <span>Same as Primary</span>
+                </label>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1" for="financeName">Finance Contact Name <span class="text-rose-500">*</span></label>
+                <input type="text" id="financeName" required placeholder="Finance / Accounts Team"
+                  class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1" for="financeEmail">Remittance Email <span class="text-rose-500">*</span></label>
+                  <input type="email" id="financeEmail" required placeholder="accounts@example.in"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1" for="financeMobile">Finance Contact No. <span class="text-rose-500">*</span></label>
+                  <input type="tel" id="financeMobile" required placeholder="e.g. 9811002233"
+                    class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step2" class="step-pane hidden bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-xs space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="landmark" class="w-5 h-5 text-brand-600"></i>
+            Taxation, MSME &amp; Indian Bank Details
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Provide Income Tax PAN, Goods and Services Tax (GSTIN), MSME Udyam status, and bank coordinates.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200">
+          <!-- PAN (Mandatory) -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-800 mb-1" for="panNumber">
+              Income Tax PAN (Permanent Account Number) <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <input type="text" id="panNumber" required maxlength="10" placeholder="ABCDE1234F"
+                oninput="this.value = this.value.toUpperCase(); validatePanFormat(this.value);"
+                class="w-full px-3.5 py-2.5 uppercase font-mono tracking-wider rounded-xl border border-slate-300 text-sm bg-white focus:border-brand-600">
+              <span id="panStatus" class="absolute right-3 top-2.5 hidden">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+              </span>
+            </div>
+            <p id="panHelp" class="text-[11px] text-slate-500 mt-1">Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)</p>
+          </div>
+
+          <!-- GSTIN with Category Dropdown -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-800" for="gstinNumber">
+                GSTIN (Goods &amp; Services Tax Identifier)
+                <span id="gstinRequiredStar" class="text-rose-500 hidden">*</span>
+              </label>
+              <select id="gstCategory" onchange="handleGstCategoryChange(this.value)" class="text-[11px] font-medium bg-slate-200 text-slate-700 rounded px-1.5 py-0.5 border border-slate-300">
+                <option value="Regular" selected>Regular Taxpayer</option>
+                <option value="Composition">Composition Scheme</option>
+                <option value="SEZ">Special Economic Zone (SEZ)</option>
+                <option value="Unregistered">Unregistered / Exempt</option>
+              </select>
+            </div>
+            <div class="relative">
+              <input type="text" id="gstinNumber" maxlength="15" placeholder="27ABCDE1234F1Z5"
+                oninput="this.value = this.value.toUpperCase(); validateGstinFormat(this.value); updateGstAttachmentRequirement();"
+                class="w-full px-3.5 py-2.5 uppercase font-mono tracking-wider rounded-xl border border-slate-300 text-sm bg-white focus:border-brand-600">
+              <span id="gstinStatus" class="absolute right-3 top-2.5 hidden">
+                <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+              </span>
+            </div>
+            <p id="gstinHelp" class="text-[11px] text-slate-500 mt-1">
+              If registered, enter 15-character GSTIN. Entering GSTIN makes the GST Certificate attachment <strong class="text-slate-700">Mandatory</strong>.
+            </p>
+          </div>
+        </div>
+
+        <!-- MSME SECTION -->
+        <div class="border border-indigo-100 bg-indigo-50/40 p-4 sm:p-5 rounded-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-100 pb-3">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <i data-lucide="badge-percent" class="w-4 h-4 text-indigo-600"></i>
+                MSME / Udyam Registration (MSMED Act, 2006)
+              </h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Selecting 'Yes' or entering Udyam No. makes MSME Certificate attachment mandatory.</p>
+            </div>
+
+            <div class="flex items-center space-x-4 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 shrink-0">
+              <span class="text-xs font-semibold text-slate-700">Are you MSME registered?</span>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="msmeRegistered" value="yes" onchange="toggleMsmeDetails(true)" class="text-brand-600 focus:ring-brand-500">
+                <span class="ml-1 text-xs text-slate-700 font-medium mr-2">Yes</span>
+              </label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="radio" name="msmeRegistered" value="no" checked onchange="toggleMsmeDetails(false)" class="text-brand-600 focus:ring-brand-500">
+                <span class="ml-1 text-xs text-slate-700 font-medium">No</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="msmeDetailsContainer" class="grid grid-cols-1 sm:grid-cols-3 gap-4 hidden">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="msmeCategory">MSME Classification</label>
+              <select id="msmeCategory" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                <option value="Micro Enterprise" selected>Micro Enterprise</option>
+                <option value="Small Enterprise">Small Enterprise</option>
+                <option value="Medium Enterprise">Medium Enterprise</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="udyamNumber">
+                Udyam Registration Number <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="udyamNumber" placeholder="UDYAM-XX-00-0000000" oninput="this.value = this.value.toUpperCase(); updateMsmeAttachmentRequirement();"
+                class="w-full px-3 py-2 uppercase font-mono rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="msmeActivity">Major Activity</label>
+              <select id="msmeActivity" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:border-brand-600">
+                <option value="Services" selected>Services Sector</option>
+                <option value="Manufacturing">Manufacturing Sector</option>
+                <option value="Trading">Trading</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank Details -->
+        <div class="border-t border-slate-100 pt-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="credit-card" class="w-4 h-4 text-brand-600"></i>
+              Bank Account Coordinates (RTGS / NEFT / IMPS Remittance)
+            </h4>
+            <span class="text-[11px] text-emerald-700 font-medium bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Electronic Transfer</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="bankBeneficiary">
+                Beneficiary Name (Must match Cheque &amp; PAN) <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="bankBeneficiary" required placeholder="Exact legal name as registered in bank"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-brand-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="bankAccountType">
+                Account Type <span class="text-rose-500">*</span>
+              </label>
+              <select id="bankAccountType" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:border-brand-600">
+                <option value="Current Account" selected>Current Account</option>
+                <option value="Cash Credit (CC) / OD">Cash Credit (CC) / OD</option>
+                <option value="Savings Account">Savings Account (Proprietorship)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="bankName">
+                Bank Name &amp; Branch <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="bankName" required placeholder="e.g. HDFC Bank, Fort Mumbai"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-brand-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="bankAccountNumber">
+                Bank Account Number <span class="text-rose-500">*</span>
+              </label>
+              <input type="password" id="bankAccountNumber" required placeholder="Enter bank account number"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:border-brand-600">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="confirmAccountNumber">
+                Confirm Bank Account Number <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="confirmAccountNumber" required placeholder="Re-enter bank account number"
+                onblur="validateAccountMatch()"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono focus:border-brand-600">
+              <p id="accountMismatchError" class="text-[11px] text-rose-600 hidden mt-1">Account numbers do not match.</p>
+            </div>
+
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-semibold text-slate-700 mb-1" for="ifscCode">
+                Bank IFSC Code <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="ifscCode" required maxlength="11" placeholder="e.g. HDFC0000060"
+                oninput="this.value = this.value.toUpperCase(); validateIfscFormat(this.value);"
+                class="w-full px-3.5 py-2.5 uppercase font-mono tracking-wider rounded-xl border border-slate-300 text-sm focus:border-brand-600">
+              <p id="ifscHelp" class="text-[11px] text-slate-500 mt-1">11 alphanumeric characters (5th char must be 0)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="step3" class="step-pane hidden bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-xs space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <h3 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+              <i data-lucide="folder-check" class="w-5 h-5 text-brand-600"></i>
+              Statutory KYC Document Uploads (PDF &amp; Images)
+            </h3>
+            <span class="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded">Supported: PDF, JPG, JPEG, PNG (Up to 10MB each)</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Mandatory: <strong class="text-slate-800">PAN Card</strong>, <strong class="text-slate-800">Aadhaar Card</strong>, and <strong class="text-slate-800">Cancelled Cheque</strong>. 
+            GST and MSME certificates become mandatory when their numbers/status are provided.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <!-- 1. PAN Card Copy (ALWAYS MANDATORY) -->
+          <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-brand-600"></i>
+                  1. Company / Proprietor PAN Card Copy
+                  <span class="text-rose-500 font-bold">*</span>
+                </span>
+                <span class="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Mandatory</span>
+              </div>
+              <p class="text-[12px] text-slate-500 mb-3">Clear PDF or image of the original PAN card.</p>
+            </div>
+
+            <div id="dropzone-panDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-panDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'panDoc')">
+              <input type="file" id="input-panDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'panDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop PAN Card</p>
+              <p class="text-[10px] text-slate-400">PDF or Image (.jpg, .jpeg, .png) up to 10MB</p>
+            </div>
+            <div id="file-item-panDoc" class="mt-2 hidden"></div>
+          </div>
+
+          <!-- 2. Aadhaar Card Copy (ALWAYS MANDATORY) -->
+          <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="user" class="w-4 h-4 text-brand-600"></i>
+                  2. Aadhaar Card (Signatory / Proprietor)
+                  <span class="text-rose-500 font-bold">*</span>
+                </span>
+                <span class="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Mandatory</span>
+              </div>
+              <p class="text-[12px] text-slate-500 mb-3">Aadhaar card copy. <strong class="text-slate-700">Notice:</strong> First 8 digits may be masked as per UIDAI rules.</p>
+            </div>
+
+            <div id="dropzone-aadhaarDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-aadhaarDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'aadhaarDoc')">
+              <input type="file" id="input-aadhaarDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'aadhaarDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop Aadhaar Copy</p>
+              <p class="text-[10px] text-slate-400">PDF or Image (Masked Aadhaar accepted)</p>
+            </div>
+            <div id="file-item-aadhaarDoc" class="mt-2 hidden"></div>
+          </div>
+
+          <!-- 3. Cancelled Cheque / Bank Passbook (ALWAYS MANDATORY) -->
+          <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="check-square" class="w-4 h-4 text-brand-600"></i>
+                  3. Cancelled Cheque or Bank Passbook Copy
+                  <span class="text-rose-500 font-bold">*</span>
+                </span>
+                <span class="text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">Mandatory</span>
+              </div>
+              <p class="text-[12px] text-slate-500 mb-3">Cancelled cheque showing account name and IFSC, or front passbook page.</p>
+            </div>
+
+            <div id="dropzone-chequeDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-chequeDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'chequeDoc')">
+              <input type="file" id="input-chequeDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'chequeDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop Cancelled Cheque</p>
+              <p class="text-[10px] text-slate-400">PDF or Image (.jpg, .jpeg, .png)</p>
+            </div>
+            <div id="file-item-chequeDoc" class="mt-2 hidden"></div>
+          </div>
+
+          <!-- 4. GST Registration Certificate (DYNAMICALLY MANDATORY IF GST PROVIDED) -->
+          <div id="card-gstDoc" class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between transition-colors">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="file-badge" class="w-4 h-4 text-slate-600"></i>
+                  <span>4. GST Registration Certificate (Form REG-06)</span>
+                  <span id="badge-gst-asterisk" class="text-rose-500 font-bold hidden">*</span>
+                </span>
+                <span id="badge-gst-status" class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Optional</span>
+              </div>
+              <p id="gstDocNote" class="text-[12px] text-slate-500 mb-3">Upload if registered under GST. Mandatory when GSTIN is entered in Step 2.</p>
+            </div>
+
+            <div id="dropzone-gstDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-gstDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'gstDoc')">
+              <input type="file" id="input-gstDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'gstDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop GST Certificate</p>
+              <p id="gstDocSubtext" class="text-[10px] text-slate-400">PDF or Image (Optional unless GSTIN provided)</p>
+            </div>
+            <div id="file-item-gstDoc" class="mt-2 hidden"></div>
+          </div>
+
+          <!-- 5. MSME / Udyam Certificate (DYNAMICALLY MANDATORY IF MSME PROVIDED) -->
+          <div id="card-msmeDoc" class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between transition-colors">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="award" class="w-4 h-4 text-slate-600"></i>
+                  <span>5. MSME / Udyam Certificate</span>
+                  <span id="badge-msme-asterisk" class="text-rose-500 font-bold hidden">*</span>
+                </span>
+                <span id="badge-msme-status" class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Optional</span>
+              </div>
+              <p id="msmeDocNote" class="text-[12px] text-slate-500 mb-3">Udyam Registration Certificate. Mandatory when MSME details or Udyam No. are provided.</p>
+            </div>
+
+            <div id="dropzone-msmeDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-msmeDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'msmeDoc')">
+              <input type="file" id="input-msmeDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'msmeDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop MSME Certificate</p>
+              <p id="msmeDocSubtext" class="text-[10px] text-slate-400">PDF or Image (Optional unless MSME active)</p>
+            </div>
+            <div id="file-item-msmeDoc" class="mt-2 hidden"></div>
+          </div>
+
+          <!-- 6. Additional Supporting Documents (OPTIONAL) -->
+          <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                  <i data-lucide="files" class="w-4 h-4 text-slate-600"></i>
+                  6. Additional Supporting Documents
+                </span>
+                <span class="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Optional</span>
+              </div>
+              <p class="text-[12px] text-slate-500 mb-3">Partnership Deed, MOA/AOA, Power of Attorney, or vendor quotes.</p>
+            </div>
+
+            <div id="dropzone-supportDoc" class="dropzone border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-3.5 text-center cursor-pointer transition-all bg-white"
+                 onclick="triggerFileInput('input-supportDoc')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'supportDoc')">
+              <input type="file" id="input-supportDoc" class="hidden" accept=".pdf,.png,.jpg,.jpeg" onchange="handleFileSelected(this, 'supportDoc')">
+              <i data-lucide="upload-cloud" class="w-6 h-6 mx-auto text-slate-400 mb-1"></i>
+              <p class="text-xs text-slate-700 font-medium">Click or Drag &amp; Drop Supporting File</p>
+              <p class="text-[10px] text-slate-400">PDF or Image up to 10MB</p>
+            </div>
+            <div id="file-item-supportDoc" class="mt-2 hidden"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <section id="step4" class="step-pane hidden bg-white rounded-2xl border border-slate-200 p-5 sm:p-8 shadow-xs space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="file-check-2" class="w-5 h-5 text-brand-600"></i>
+            Review, Assign Acknowledgement No. &amp; Statutory Declaration
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">Review onboarding summary and verify or update the internal selection Acknowledgement Number.</p>
+        </div>
+
+        <!-- Attending Officer / Selection Acknowledgement Number Card -->
+        <div class="bg-brand-50/60 border border-brand-200 rounded-2xl p-4 sm:p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span class="text-xs font-bold text-brand-900 uppercase tracking-wide flex items-center gap-1.5">
+                <i data-lucide="tag" class="w-4 h-4 text-brand-700"></i>
+                Vendor Acknowledgement / Internal Reference Number
+              </span>
+              <p class="text-xs text-slate-600 mt-0.5">
+                This reference number will be updated on your main record while attending or selecting the vendor. You can modify it anytime.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="step4AckNumber" 
+                class="w-full sm:w-56 px-3 py-2 text-sm font-mono font-bold text-brand-900 bg-white border border-brand-300 rounded-xl focus:border-brand-600 focus:ring-2 focus:ring-brand-200 uppercase"
+                placeholder="VEND-2026-001"
+                oninput="syncAckNumber(this.value)">
+              <button type="button" onclick="generateNewAckNumber()" 
+                class="px-3 py-2 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 border border-brand-200 rounded-xl shadow-2xs transition flex items-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review Summary Table -->
+        <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 text-xs sm:text-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+            <span class="font-bold text-slate-900 text-sm">Vendor Profile Summary</span>
+            <button type="button" onclick="goToStep(1)" class="text-xs text-brand-600 hover:underline font-semibold flex items-center gap-1">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Details
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <span class="text-slate-500 block text-[11px]">Legal Entity</span>
+              <span class="font-semibold text-slate-900" id="revLegalName">-</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">PAN</span>
+              <span class="font-mono font-semibold text-slate-900" id="revPan">-</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">GSTIN</span>
+              <span class="font-mono font-semibold text-slate-900" id="revGstin">-</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">MSME Classification</span>
+              <span class="font-semibold text-indigo-700" id="revMsme">-</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">Bank / IFSC</span>
+              <span class="font-semibold text-slate-900" id="revBank">-</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[11px]">Attached Documents</span>
+              <span class="font-semibold text-emerald-700" id="revDocsCount">0 files attached</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statutory Undertakings -->
+        <div class="space-y-3 p-4 sm:p-5 rounded-xl bg-amber-50/40 border border-amber-200/80">
+          <h4 class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600"></i>
+            Statutory Undertaking (Section 206AB, Section 194Q &amp; GST Rules)
+          </h4>
+
+          <div class="space-y-2.5">
+            <label class="flex items-start space-x-3 cursor-pointer select-none">
+              <input type="checkbox" id="certifyPanGst" required class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <span class="text-xs text-slate-700 leading-relaxed">
+                I declare that the <strong>PAN and GSTIN</strong> furnished are authentic. I am not a "Specified Person" under Section 206AB/206CCA of the Indian Income Tax Act.
+              </span>
+            </label>
+
+            <label class="flex items-start space-x-3 cursor-pointer select-none">
+              <input type="checkbox" id="certifyBank" required class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <span class="text-xs text-slate-700 leading-relaxed">
+                I confirm that the <strong>Bank Account Coordinates</strong> (IFSC &amp; Account Number) provided belong to our registered entity.
+              </span>
+            </label>
+
+            <label class="flex items-start space-x-3 cursor-pointer select-none">
+              <input type="checkbox" id="certifyMsmeStatus" required class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+              <span class="text-xs text-slate-700 leading-relaxed">
+                The <strong>MSME / Udyam status</strong> indicated is current and accurate according to the MSMED Act, 2006.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1" for="signatoryName">
+              Authorized Signatory Name <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="signatoryName" required placeholder="Full Name"
+              class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-brand-600 bg-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1" for="signatoryDesignation">
+              Designation / Capacity <span class="text-rose-500">*</span>
+            </label>
+            <input type="text" id="signatoryDesignation" required placeholder="e.g. Director / Partner"
+              class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-brand-600 bg-white">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1" for="submissionDate">
+              Declaration Date
+            </label>
+            <input type="text" id="submissionDate" readonly
+              class="w-full px-3.5 py-2 rounded-xl border border-slate-200 bg-slate-100 text-sm text-slate-600 font-mono">
+          </div>
+        </div>
+      </section>
+
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <button type="button" id="prevBtn" onclick="changeStep(-1)"
+          class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 invisible">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          Back
+        </button>
+
+        <div id="validationMessage" class="hidden text-xs text-rose-600 font-medium flex items-center gap-1.5 text-center sm:text-left bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+          <span id="validationMessageText">Please complete required fields.</span>
+        </div>
+
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button type="button" id="nextBtn" onclick="changeStep(1)"
+            class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2">
+            Continue
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          
+          <button type="submit" id="submitBtn"
+            class="hidden w-full sm:w-auto px-7 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            Submit Onboarding Application
+          </button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <div id="successModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 hidden">
+    <div id="printableSummary" class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 text-center transform transition-all">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xs">
+        <i data-lucide="badge-check" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-xl sm:text-2xl font-bold text-slate-900">Application Registered!</h3>
+      <p class="text-xs sm:text-sm text-slate-600 mt-1">
+        Vendor profile and KYC attachments have been archived for onboarding and selection.
+      </p>
+
+      <!-- Prominent Acknowledgement Box (Editable / Updatable) -->
+      <div class="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-2xl text-left">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-brand-800">Assigned Vendor / Ack Ref No:</span>
+          <button type="button" onclick="copyAckNumber()" class="text-[11px] font-medium text-brand-700 hover:text-brand-900 flex items-center gap-1 no-print">
+            <i data-lucide="copy" class="w-3 h-3"></i> <span id="copyBtnText">Copy Ref</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="finalAckInput" 
+            class="flex-1 font-mono text-base font-extrabold text-brand-900 bg-white px-2.5 py-1.5 rounded-lg border border-brand-300 focus:border-brand-600 uppercase"
+            oninput="syncAckNumber(this.value)">
+          <span class="text-[11px] text-slate-500 font-medium no-print">(Editable)</span>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-1 no-print">Use this number to update the master vendor file or purchase registry.</p>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-4 my-4 text-left border border-slate-200 text-xs space-y-2">
+        <div class="flex justify-between">
+          <span class="text-slate-500">Legal Entity:</span>
+          <span class="font-semibold text-slate-800" id="ackLegalName">-</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">Permanent Account No (PAN):</span>
+          <span class="font-mono font-semibold text-slate-800" id="ackPan">-</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">GSTIN:</span>
+          <span class="font-mono font-semibold text-slate-800" id="ackGst">-</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-500">MSME Status:</span>
+          <span class="font-semibold text-slate-800" id="ackMsme">-</span>
+        </div>
+        <div class="flex justify-between pt-1 border-t border-slate-200">
+          <span class="text-slate-500">Uploaded Documents:</span>
+          <span class="font-semibold text-emerald-700" id="ackDocsCount">0 files attached</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 no-print">
+        <button type="button" onclick="window.print()" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-semibold hover:bg-slate-100 transition-colors flex items-center justify-center gap-1.5">
+          <i data-lucide="printer" class="w-4 h-4"></i> Print Summary
+        </button>
+        <button type="button" onclick="downloadSummaryJson()" class="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
+          <i data-lucide="download" class="w-4 h-4"></i> Download JSON
+        </button>
+        <button type="button" onclick="resetForm()" class="flex-1 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-semibold transition-colors flex items-center justify-center gap-1.5">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> New Entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 4;
+    
+    // Uploaded files registry holding metadata & base64/preview
+    const uploadedFiles = {
+      panDoc: null,      // ALWAYS MANDATORY
+      aadhaarDoc: null,  // ALWAYS MANDATORY
+      chequeDoc: null,   // ALWAYS MANDATORY
+      gstDoc: null,      // DYNAMICALLY MANDATORY IF GST PROVIDED
+      msmeDoc: null,     // DYNAMICALLY MANDATORY IF MSME PROVIDED
+      supportDoc: null   // ALWAYS OPTIONAL
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date();
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      document.getElementById('submissionDate').value = today.toLocaleDateString('en-IN', options);
+      
+      // Generate default Acknowledgement Number
+      generateNewAckNumber();
+
+      // Initialize dynamic attachment requirements
+      updateGstAttachmentRequirement();
+      updateMsmeAttachmentRequirement();
+      lucide.createIcons();
+    });
+
+    // Acknowledgement Number synchronization across all inputs
+    function syncAckNumber(val) {
+      const upperVal = val.toUpperCase();
+      document.getElementById('headerAckNumber').value = upperVal;
+      document.getElementById('step4AckNumber').value = upperVal;
+      document.getElementById('finalAckInput').value = upperVal;
+    }
+
+    function generateNewAckNumber() {
+      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+      const generated = `VEND-2026-${randomDigits}`;
+      syncAckNumber(generated);
+    }
+
+    function copyAckNumber() {
+      const ackVal = document.getElementById('finalAckInput').value;
+      const dummy = document.createElement("textarea");
+      document.body.appendChild(dummy);
+      dummy.value = ackVal;
+      dummy.select();
+      document.execCommand("copy");
+      document.body.removeChild(dummy);
+
+      const copyBtn = document.getElementById('copyBtnText');
+      copyBtn.innerText = "Copied!";
+      setTimeout(() => {
+        copyBtn.innerText = "Copy Ref";
+      }, 2000);
+    }
+
+    // Determine if GST is provided (Regular/Composition/SEZ with GSTIN entered)
+    function isGstProvided() {
+      const category = document.getElementById('gstCategory').value;
+      const gstinVal = document.getElementById('gstinNumber').value.trim();
+      return (category !== 'Unregistered' && gstinVal.length > 0);
+    }
+
+    // Determine if MSME is provided (Radio 'yes' or Udyam number entered)
+    function isMsmeProvided() {
+      const isYes = document.querySelector('input[name="msmeRegistered"]:checked')?.value === 'yes';
+      const udyamVal = document.getElementById('udyamNumber').value.trim();
+      return isYes || udyamVal.length > 0;
+    }
+
+    // Dynamic UI updater for GST Certificate Requirement
+    function updateGstAttachmentRequirement() {
+      const isReq = isGstProvided();
+      const asterisk = document.getElementById('badge-gst-asterisk');
+      const badge = document.getElementById('badge-gst-status');
+      const note = document.getElementById('gstDocNote');
+      const subtext = document.getElementById('gstDocSubtext');
+
+      if (isReq) {
+        asterisk.classList.remove('hidden');
+        badge.innerText = "Mandatory";
+        badge.className = "text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200";
+        note.innerHTML = `<span class="text-rose-600 font-medium">Mandatory</span> since GSTIN is entered. Upload Form REG-06.`;
+        subtext.innerText = "Required • PDF or Image up to 10MB";
+      } else {
+        asterisk.classList.add('hidden');
+        badge.innerText = "Optional";
+        badge.className = "text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200";
+        note.innerHTML = `Optional for unregistered or exempt vendors. Upload REG-06 if available.`;
+        subtext.innerText = "Optional • PDF or Image up to 10MB";
+      }
+    }
+
+    // Dynamic UI updater for MSME Certificate Requirement
+    function updateMsmeAttachmentRequirement() {
+      const isReq = isMsmeProvided();
+      const asterisk = document.getElementById('badge-msme-asterisk');
+      const badge = document.getElementById('badge-msme-status');
+      const note = document.getElementById('msmeDocNote');
+      const subtext = document.getElementById('msmeDocSubtext');
+
+      if (isReq) {
+        asterisk.classList.remove('hidden');
+        badge.innerText = "Mandatory";
+        badge.className = "text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200";
+        note.innerHTML = `<span class="text-rose-600 font-medium">Mandatory</span> since MSME status is active. Upload Udyam Certificate.`;
+        subtext.innerText = "Required • PDF or Image up to 10MB";
+      } else {
+        asterisk.classList.add('hidden');
+        badge.innerText = "Optional";
+        badge.className = "text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200";
+        note.innerHTML = `Optional if not registered under MSME. Upload Udyam certificate if available.`;
+        subtext.innerText = "Optional • PDF or Image up to 10MB";
+      }
+    }
+
+    function handleGstCategoryChange(val) {
+      const gstInput = document.getElementById('gstinNumber');
+      const reqStar = document.getElementById('gstinRequiredStar');
+      const help = document.getElementById('gstinHelp');
+
+      if (val === 'Unregistered') {
+        gstInput.value = '';
+        gstInput.required = false;
+        gstInput.placeholder = "Unregistered / Exempt from GST";
+        reqStar.classList.add('hidden');
+        help.innerText = "Vendor is marked as unregistered or exempt from GST.";
+        document.getElementById('gstinStatus').classList.add('hidden');
+      } else {
+        gstInput.required = true;
+        gstInput.placeholder = "27ABCDE1234F1Z5";
+        reqStar.classList.remove('hidden');
+        help.innerText = "15-character GSTIN. Entering GSTIN makes the GST Certificate attachment Mandatory.";
+      }
+      updateGstAttachmentRequirement();
+    }
+
+    function toggleMsmeDetails(isRegistered) {
+      const container = document.getElementById('msmeDetailsContainer');
+      const udyamInput = document.getElementById('udyamNumber');
+      if (isRegistered) {
+        container.classList.remove('hidden');
+        udyamInput.required = true;
+      } else {
+        container.classList.add('hidden');
+        udyamInput.required = false;
+        udyamInput.value = '';
+      }
+      updateMsmeAttachmentRequirement();
+    }
+
+    function goToStep(step) {
+      if (step > currentStep) {
+        if (!validateStep(currentStep)) {
+          showValidationAlert("Please complete the required fields with valid details before continuing.");
+          return;
+        }
+      }
+      hideValidationAlert();
+      currentStep = step;
+      renderStep();
+    }
+
+    function changeStep(delta) {
+      if (delta > 0) {
+        if (!validateStep(currentStep)) {
+          showValidationAlert("Please complete all mandatory fields with valid inputs.");
+          return;
+        }
+      }
+      hideValidationAlert();
+      currentStep += delta;
+      renderStep();
+    }
+
+    function renderStep() {
+      if (currentStep === 3) {
+        updateGstAttachmentRequirement();
+        updateMsmeAttachmentRequirement();
+      }
+
+      for (let i = 1; i <= totalSteps; i++) {
+        const pane = document.getElementById(`step${i}`);
+        if (i === currentStep) {
+          pane.classList.remove('hidden');
+        } else {
+          pane.classList.add('hidden');
+        }
+      }
+
+      const steps = document.querySelectorAll('#stepperList .step-indicator');
+      steps.forEach((indicator, index) => {
+        const stepNum = index + 1;
+        const badge = indicator.querySelector('.step-badge');
+        const tag = indicator.querySelector('.step-tag');
+        const name = indicator.querySelector('.step-name');
+
+        if (stepNum === currentStep) {
+          indicator.className = 'step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer bg-brand-50 border border-brand-200';
+          badge.className = 'step-badge w-8 h-8 rounded-lg bg-brand-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0';
+          badge.innerText = stepNum;
+          tag.className = 'step-tag text-[10px] font-semibold text-brand-700 uppercase tracking-wider';
+          name.className = 'step-name text-xs sm:text-sm font-bold text-slate-900 truncate';
+        } else if (stepNum < currentStep) {
+          indicator.className = 'step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-50 border border-transparent';
+          badge.className = 'step-badge w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0';
+          badge.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+          tag.className = 'step-tag text-[10px] font-semibold text-slate-500 uppercase tracking-wider';
+          name.className = 'step-name text-xs sm:text-sm font-medium text-slate-700 truncate';
+        } else {
+          indicator.className = 'step-indicator flex items-center space-x-3 p-2 rounded-xl transition-all cursor-pointer hover:bg-slate-50 border border-transparent';
+          badge.className = 'step-badge w-8 h-8 rounded-lg bg-slate-200 text-slate-600 font-semibold text-xs sm:text-sm flex items-center justify-center shrink-0';
+          badge.innerText = stepNum;
+          tag.className = 'step-tag text-[10px] font-semibold text-slate-500 uppercase tracking-wider';
+          name.className = 'step-name text-xs sm:text-sm font-medium text-slate-600 truncate';
+        }
+      });
+
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (currentStep === 1) {
+        prevBtn.classList.add('invisible');
+      } else {
+        prevBtn.classList.remove('invisible');
+      }
+
+      if (currentStep === totalSteps) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+        updateReviewSummary();
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function validateStep(step) {
+      const activePane = document.getElementById(`step${step}`);
+      const requiredInputs = activePane.querySelectorAll('input[required], select[required]');
+      let isValid = true;
+
+      requiredInputs.forEach(input => {
+        if (input.type === 'checkbox') {
+          if (!input.checked) {
+            isValid = false;
+            highlightInvalid(input);
+          } else {
+            clearInvalid(input);
+          }
+        } else {
+          if (!input.value.trim()) {
+            isValid = false;
+            highlightInvalid(input);
+          } else {
+            clearInvalid(input);
+          }
+        }
+      });
+
+      if (step === 2) {
+        const panVal = document.getElementById('panNumber').value.trim();
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+        if (!panRegex.test(panVal)) {
+          showValidationAlert("Invalid PAN format! PAN must be 10 characters (e.g. ABCDE1234F).");
+          highlightInvalid(document.getElementById('panNumber'));
+          return false;
+        }
+
+        const gstCategory = document.getElementById('gstCategory').value;
+        const gstinVal = document.getElementById('gstinNumber').value.trim();
+        if (gstCategory !== 'Unregistered' && gstinVal.length > 0) {
+          const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+          if (!gstinRegex.test(gstinVal)) {
+            showValidationAlert("Invalid GSTIN format! Must be 15 characters (e.g. 27ABCDE1234F1Z5).");
+            highlightInvalid(document.getElementById('gstinNumber'));
+            return false;
+          }
+        }
+
+        const ifscVal = document.getElementById('ifscCode').value.trim();
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        if (!ifscRegex.test(ifscVal)) {
+          showValidationAlert("Invalid IFSC code! Must be 11 characters with 5th character as 0 (e.g. HDFC0000060).");
+          highlightInvalid(document.getElementById('ifscCode'));
+          return false;
+        }
+
+        if (!validateAccountMatch()) {
+          showValidationAlert("Bank Account numbers do not match.");
+          return false;
+        }
+      }
+
+      // STEP 3: DYNAMIC ATTACHMENTS VALIDATION
+      if (step === 3) {
+        if (!uploadedFiles.panDoc) {
+          showValidationAlert("Please upload PAN Card Copy (Mandatory).");
+          return false;
+        }
+        if (!uploadedFiles.aadhaarDoc) {
+          showValidationAlert("Please upload Aadhaar Card Copy (Mandatory).");
+          return false;
+        }
+        if (!uploadedFiles.chequeDoc) {
+          showValidationAlert("Please upload Cancelled Cheque or Bank Passbook copy (Mandatory).");
+          return false;
+        }
+
+        // Conditional: GST Certificate is mandatory if GST details provided
+        if (isGstProvided() && !uploadedFiles.gstDoc) {
+          showValidationAlert("GSTIN is provided in Step 2. Please upload the GST Registration Certificate (Mandatory).");
+          highlightInvalid(document.getElementById('card-gstDoc'));
+          return false;
+        } else {
+          clearInvalid(document.getElementById('card-gstDoc'));
+        }
+
+        // Conditional: MSME Certificate is mandatory if MSME is active/provided
+        if (isMsmeProvided() && !uploadedFiles.msmeDoc) {
+          showValidationAlert("MSME details are provided in Step 2. Please upload the MSME / Udyam Certificate (Mandatory).");
+          highlightInvalid(document.getElementById('card-msmeDoc'));
+          return false;
+        } else {
+          clearInvalid(document.getElementById('card-msmeDoc'));
+        }
+      }
+
+      return isValid;
+    }
+
+    function highlightInvalid(el) {
+      el.classList.add('border-rose-500', 'bg-rose-50/40');
+    }
+
+    function clearInvalid(el) {
+      el.classList.remove('border-rose-500', 'bg-rose-50/40');
+    }
+
+    function showValidationAlert(msg) {
+      const alertBox = document.getElementById('validationMessage');
+      const text = document.getElementById('validationMessageText');
+      text.innerText = msg;
+      alertBox.classList.remove('hidden');
+    }
+
+    function hideValidationAlert() {
+      const alertBox = document.getElementById('validationMessage');
+      alertBox.classList.add('hidden');
+    }
+
+    function validatePanFormat(value) {
+      const regex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+      const statusIcon = document.getElementById('panStatus');
+      const help = document.getElementById('panHelp');
+      if (regex.test(value)) {
+        statusIcon.classList.remove('hidden');
+        help.innerText = "✓ Valid Indian PAN format";
+        help.className = "text-[11px] text-emerald-600 mt-1 font-medium";
+        clearInvalid(document.getElementById('panNumber'));
+      } else {
+        statusIcon.classList.add('hidden');
+        help.innerText = "Format: 5 letters, 4 digits, 1 letter (e.g. ABCDE1234F)";
+        help.className = "text-[11px] text-slate-500 mt-1";
+      }
+    }
+
+    function validateGstinFormat(value) {
+      const regex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      const statusIcon = document.getElementById('gstinStatus');
+      const help = document.getElementById('gstinHelp');
+      if (regex.test(value)) {
+        statusIcon.classList.remove('hidden');
+        help.innerText = "✓ Valid 15-character GSTIN format";
+        help.className = "text-[11px] text-emerald-600 mt-1 font-medium";
+        clearInvalid(document.getElementById('gstinNumber'));
+      } else {
+        statusIcon.classList.add('hidden');
+        help.innerText = "15-character alphanumeric GSTIN matching state code & PAN";
+        help.className = "text-[11px] text-slate-500 mt-1";
+      }
+    }
+
+    function validateIfscFormat(value) {
+      const regex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+      const help = document.getElementById('ifscHelp');
+      if (regex.test(value)) {
+        help.innerText = "✓ Valid Indian IFSC format";
+        help.className = "text-[11px] text-emerald-600 mt-1 font-medium";
+        clearInvalid(document.getElementById('ifscCode'));
+      } else {
+        help.innerText = "11 chars (4 letters, 0, 6 alpha-numeric e.g. HDFC0000060)";
+        help.className = "text-[11px] text-slate-500 mt-1";
+      }
+    }
+
+    function validateAccountMatch() {
+      const acc = document.getElementById('bankAccountNumber').value;
+      const confirmAcc = document.getElementById('confirmAccountNumber').value;
+      const err = document.getElementById('accountMismatchError');
+      if (confirmAcc && acc !== confirmAcc) {
+        err.classList.remove('hidden');
+        return false;
+      } else {
+        err.classList.add('hidden');
+        return true;
+      }
+    }
+
+    function syncBillingContact(checkbox) {
+      if (checkbox.checked) {
+        document.getElementById('financeName').value = document.getElementById('primaryName').value;
+        document.getElementById('financeEmail').value = document.getElementById('primaryEmail').value;
+        document.getElementById('financeMobile').value = document.getElementById('primaryMobile').value;
+      }
+    }
+
+    function triggerFileInput(id) {
+      document.getElementById(id).click();
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+    }
+
+    function handleDrop(e, key) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        processUploadedFile(e.dataTransfer.files[0], key);
+      }
+    }
+
+    function handleFileSelected(inputElement, key) {
+      if (inputElement.files && inputElement.files.length > 0) {
+        processUploadedFile(inputElement.files[0], key);
+      }
+    }
+
+    // Process PDF and Image uploads with preview thumbnail generation
+    function processUploadedFile(file, key) {
+      const maxSize = 10 * 1024 * 1024; // 10MB limit
+      const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+
+      if (!allowedTypes.includes(file.type)) {
+        showValidationAlert(`Invalid file format for "${file.name}". Please upload PDF, PNG or JPG files.`);
+        return;
+      }
+
+      if (file.size > maxSize) {
+        showValidationAlert(`"${file.name}" exceeds the 10MB file size limit.`);
+        return;
+      }
+
+      hideValidationAlert();
+
+      // Read for image thumbnail or PDF indicator
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          uploadedFiles[key] = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            dataUrl: e.target.result,
+            isImage: true
+          };
+          renderFileCard(key, uploadedFiles[key]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // PDF document
+        uploadedFiles[key] = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          dataUrl: null,
+          isImage: false
+        };
+        renderFileCard(key, uploadedFiles[key]);
+      }
+    }
+
+    function renderFileCard(key, fileObj) {
+      const dropzone = document.getElementById(`dropzone-${key}`);
+      const fileItem = document.getElementById(`file-item-${key}`);
+      const sizeStr = (fileObj.size < 1024 * 1024) 
+        ? `${(fileObj.size / 1024).toFixed(0)} KB` 
+        : `${(fileObj.size / (1024 * 1024)).toFixed(2)} MB`;
+
+      dropzone.classList.add('hidden');
+      fileItem.classList.remove('hidden');
+
+      const previewHtml = fileObj.isImage 
+        ? `<div class="w-10 h-10 rounded-lg overflow-hidden border border-slate-300 bg-white shrink-0">
+             <img src="${fileObj.dataUrl}" alt="Preview" class="w-full h-full object-cover">
+           </div>`
+        : `<div class="w-10 h-10 rounded-lg bg-rose-600 text-white flex flex-col items-center justify-center shrink-0 shadow-2xs font-bold text-[10px]">
+             <i data-lucide="file-text" class="w-4 h-4 mb-0.5"></i>
+             <span>PDF</span>
+           </div>`;
+
+      fileItem.innerHTML = `
+        <div class="flex items-center justify-between p-2.5 bg-slate-100/90 border border-slate-300 rounded-xl shadow-2xs">
+          <div class="flex items-center space-x-3 overflow-hidden">
+            ${previewHtml}
+            <div class="truncate">
+              <p class="text-xs font-semibold text-slate-800 truncate" title="${escapeHtml(fileObj.name)}">${escapeHtml(fileObj.name)}</p>
+              <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
+                <span>${sizeStr}</span>
+                <span>•</span>
+                <span class="text-emerald-700 font-semibold flex items-center gap-0.5">
+                  <i data-lucide="check" class="w-3 h-3"></i> Ready
+                </span>
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="removeFile('${key}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-white transition-colors" title="Remove file">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    function removeFile(key) {
+      uploadedFiles[key] = null;
+      const input = document.getElementById(`input-${key}`);
+      if (input) input.value = '';
+
+      const dropzone = document.getElementById(`dropzone-${key}`);
+      const fileItem = document.getElementById(`file-item-${key}`);
+
+      dropzone.classList.remove('hidden');
+      fileItem.classList.add('hidden');
+      fileItem.innerHTML = '';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text;
+      return div.innerHTML;
+    }
+
+    function updateReviewSummary() {
+      document.getElementById('revLegalName').innerText = document.getElementById('legalName').value || '-';
+      document.getElementById('revPan').innerText = document.getElementById('panNumber').value || '-';
+      document.getElementById('revGstin').innerText = document.getElementById('gstinNumber').value || 'Unregistered / Exempt';
+      
+      const isMsme = isMsmeProvided();
+      document.getElementById('revMsme').innerText = isMsme 
+        ? `${document.getElementById('msmeCategory').value}`
+        : 'Not Registered under MSME';
+
+      const bank = document.getElementById('bankName').value || 'Bank';
+      const ifsc = document.getElementById('ifscCode').value || '';
+      document.getElementById('revBank').innerText = `${bank} (${ifsc})`;
+
+      const docsCount = Object.values(uploadedFiles).filter(f => f !== null).length;
+      document.getElementById('revDocsCount').innerText = `${docsCount} documents attached`;
+    }
+
+    function submitVendorForm() {
+      if (!validateStep(4)) return;
+
+      const finalAck = document.getElementById('headerAckNumber').value.trim() || `VEND-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      syncAckNumber(finalAck);
+
+      const companyName = document.getElementById('legalName').value;
+      const pan = document.getElementById('panNumber').value;
+      const gst = document.getElementById('gstinNumber').value || 'Unregistered / Exempt';
+      const isMsme = isMsmeProvided();
+      const docsCount = Object.values(uploadedFiles).filter(f => f !== null).length;
+
+      document.getElementById('ackLegalName').innerText = companyName;
+      document.getElementById('ackPan').innerText = pan;
+      document.getElementById('ackGst').innerText = gst;
+      document.getElementById('ackMsme').innerText = isMsme ? document.getElementById('msmeCategory').value : 'No';
+      document.getElementById('ackDocsCount').innerText = `${docsCount} files uploaded`;
+
+      document.getElementById('successModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function downloadSummaryJson() {
+      const payload = {
+        acknowledgementNumber: document.getElementById('finalAckInput').value,
+        companyName: document.getElementById('legalName').value,
+        tradeName: document.getElementById('tradeName').value || null,
+        entityType: document.getElementById('entityType').value,
+        cinOrLlpin: document.getElementById('cinNumber').value || null,
+        website: document.getElementById('websiteUrl').value || null,
+        address: {
+          street: document.getElementById('registeredAddress').value,
+          city: document.getElementById('cityAddress').value,
+          state: document.getElementById('stateAddress').value,
+          pinCode: document.getElementById('pinCode').value
+        },
+        taxAndBanking: {
+          pan: document.getElementById('panNumber').value,
+          gstCategory: document.getElementById('gstCategory').value,
+          gstin: document.getElementById('gstinNumber').value || null,
+          isMsme: isMsmeProvided(),
+          udyamNumber: document.getElementById('udyamNumber').value || null,
+          bankBeneficiary: document.getElementById('bankBeneficiary').value,
+          accountNumber: document.getElementById('bankAccountNumber').value,
+          ifsc: document.getElementById('ifscCode').value,
+          bankName: document.getElementById('bankName').value
+        },
+        signatory: {
+          name: document.getElementById('signatoryName').value,
+          designation: document.getElementById('signatoryDesignation').value,
+          date: document.getElementById('submissionDate').value
+        },
+        attachedFiles: Object.keys(uploadedFiles).filter(k => uploadedFiles[k] !== null).map(k => ({
+          documentKey: k,
+          fileName: uploadedFiles[k].name,
+          fileType: uploadedFiles[k].type,
+          fileSize: uploadedFiles[k].size
+        }))
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `${payload.acknowledgementNumber}_Vendor_Summary.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function resetForm() {
+      document.getElementById('vendorForm').reset();
+      Object.keys(uploadedFiles).forEach(k => removeFile(k));
+      toggleMsmeDetails(false);
+      handleGstCategoryChange('Regular');
+      generateNewAckNumber();
+      document.getElementById('successModal').classList.add('hidden');
+      goToStep(1);
+    }
+  </script>
+</body>
+</html>
