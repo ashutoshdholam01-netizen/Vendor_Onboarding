@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Indian Vendor Onboarding & KYC Portal</title>
+  <title>Ashutosh & Co.</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter -->
@@ -901,19 +901,57 @@
       supportDoc: null   // ALWAYS OPTIONAL
     };
 
+   // Global variables to store verified details
+    let verifiedAppNo = null;
+    let verifiedUid = null;
+
     document.addEventListener('DOMContentLoaded', () => {
       const today = new Date();
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
       document.getElementById('submissionDate').value = today.toLocaleDateString('en-IN', options);
-      
-      // Generate default Acknowledgement Number
-      generateNewAckNumber();
 
-      // Initialize dynamic attachment requirements
+      // 1. Read parameters from the website URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramAppNo = urlParams.get('appNo');
+      const paramUid = urlParams.get('uid');
+
+      // 2. If appNo or uid is missing, block the user immediately
+      if (!paramAppNo || !paramUid) {
+        blockAccess("Access Denied", "Direct access to this form is disabled. You must open the personalized link sent to your registered email.");
+        return;
+      }
+
+      // 3. If present, lock the Application Number to the form
+      verifiedAppNo = paramAppNo.trim();
+      verifiedUid = paramUid.trim();
+
+      syncAckNumber(verifiedAppNo);
+
+      // Make the input boxes read-only so the vendor cannot edit the number
+      document.getElementById('headerAckNumber').readOnly = true;
+      document.getElementById('step4AckNumber').readOnly = true;
+      document.getElementById('finalAckInput').readOnly = true;
+
+      // Hide the random regenerate buttons
+      const regenBtns = document.querySelectorAll('button[onclick="generateNewAckNumber()"]');
+      regenBtns.forEach(btn => btn.style.display = 'none');
+
+      // Initialize form rules
       updateGstAttachmentRequirement();
       updateMsmeAttachmentRequirement();
       lucide.createIcons();
     });
+
+    // Helper function to block the screen
+    function blockAccess(title, message) {
+      document.getElementById('blockedTitle').innerText = title;
+      document.getElementById('blockedMessage').innerText = message;
+      document.getElementById('blockedRef').innerText = `Ref: ${verifiedAppNo || 'No Token Provided'}`;
+      document.getElementById('accessBlockedModal').classList.remove('hidden');
+      document.getElementById('vendorForm').style.pointerEvents = 'none';
+      document.getElementById('vendorForm').style.opacity = '0.3';
+      lucide.createIcons();
+    }
 
     // Acknowledgement Number synchronization across all inputs
     function syncAckNumber(val) {
@@ -1483,7 +1521,7 @@
       lucide.createIcons();
     }
 
-    function downloadSummaryJson() {
+    function downloadSummarypdf() {
       const payload = {
         acknowledgementNumber: document.getElementById('finalAckInput').value,
         companyName: document.getElementById('legalName').value,
@@ -1540,5 +1578,22 @@
       goToStep(1);
     }
   </script>
+  <!-- Access Blocked Modal -->
+<div id="accessBlockedModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 hidden">
+  <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 text-center">
+    <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <i data-lucide="shield-alert" class="w-8 h-8"></i>
+    </div>
+    <h3 class="text-xl font-bold text-slate-900" id="blockedTitle">Access Denied</h3>
+    <p class="text-xs sm:text-sm text-slate-600 mt-2" id="blockedMessage">
+      Direct access to this form is disabled. Please open the link sent to your registered email address.
+    </p>
+    <div class="mt-6">
+      <span class="inline-block text-[11px] font-mono font-semibold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200" id="blockedRef">
+        Ref: Unauthorized
+      </span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
