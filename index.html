@@ -901,58 +901,139 @@
       supportDoc: null   // ALWAYS OPTIONAL
     };
 
-   // Global variables to store verified details
+// ==========================================
+    // BACKEND VERIFICATION ENDPOINT
+    // ==========================================
+    const VERIFY_ENDPOINT_URL = "https://default44060820ecc94366b97e0db725e356.db.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/29/workflows/a28fea92c3034cbda37f61e009c4d36a/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=EKgaWFezPFAgd1yheWKGSeU0OZ_uL9i73WVsYyuk9Og";
+
     let verifiedAppNo = null;
     let verifiedUid = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const today = new Date();
       const options = { year: 'numeric', month: 'short', day: 'numeric' };
-      document.getElementById('submissionDate').value = today.toLocaleDateString('en-IN', options);
+      const subDateElem = document.getElementById('submissionDate');
+      if (subDateElem) {
+        subDateElem.value = today.toLocaleDateString('en-IN', options);
+      }
 
-      // 1. Read parameters from the website URL
+      // 1. Read parameters from URL query string
       const urlParams = new URLSearchParams(window.location.search);
       const paramAppNo = urlParams.get('appNo');
       const paramUid = urlParams.get('uid');
 
-      // 2. If appNo or uid is missing, block the user immediately
+      // 2. Reject immediately if either parameter is missing
       if (!paramAppNo || !paramUid) {
-        blockAccess("Access Denied", "Direct access to this form is disabled. You must open the personalized link sent to your registered email.");
+        blockAccess(
+          "Access Denied", 
+          "Direct access to this form is disabled. You must open the personalized link sent to your registered email."
+        );
         return;
       }
 
-      // 3. If present, lock the Application Number to the form
       verifiedAppNo = paramAppNo.trim();
       verifiedUid = paramUid.trim();
 
-      syncAckNumber(verifiedAppNo);
+      // Gray out the form while verifying against Excel
+      showVerificationLoading(true);
 
-      // Make the input boxes read-only so the vendor cannot edit the number
-      document.getElementById('headerAckNumber').readOnly = true;
-      document.getElementById('step4AckNumber').readOnly = true;
-      document.getElementById('finalAckInput').readOnly = true;
+      try {
+        // 3. Make real-time verification call to Power Automate
+        const response = await fetch(VERIFY_ENDPOINT_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            appNo: verifiedAppNo,
+            uid: verifiedUid
+          })
+        });
 
-      // Hide the random regenerate buttons
-      const regenBtns = document.querySelectorAll('button[onclick="generateNewAckNumber()"]');
-      regenBtns.forEach(btn => btn.style.display = 'none');
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
 
-      // Initialize form rules
-      updateGstAttachmentRequirement();
-      updateMsmeAttachmentRequirement();
-      lucide.createIcons();
+        const result = await response.json();
+
+        // 4. If backend returns invalid, block access
+        if (!result.valid) {
+          showVerificationLoading(false);
+          blockAccess(
+            "Verification Failed", 
+            result.message || "This application reference or access token is invalid or has been altered. Access is blocked."
+          );
+          return;
+        }
+
+        // 5. Verification passed: unlock form
+        showVerificationLoading(false);
+        syncAckNumber(verifiedAppNo);
+
+        // Pre-fill registered legal/company name if returned by flow
+        if (result.name && document.getElementById('legalName')) {
+          document.getElementById('legalName').value = result.name;
+        }
+
+        // Lock reference inputs so vendor cannot alter them
+        const hAck = document.getElementById('headerAckNumber');
+        const s4Ack = document.getElementById('step4AckNumber');
+        const fAck = document.getElementById('finalAckInput');
+        if (hAck) hAck.readOnly = true;
+        if (s4Ack) s4Ack.readOnly = true;
+        if (fAck) fAck.readOnly = true;
+
+        // Hide regeneration buttons
+        const regenBtns = document.querySelectorAll('button[onclick="generateNewAckNumber()"]');
+        regenBtns.forEach(btn => btn.style.display = 'none');
+
+        // Refresh dependent validations
+        if (typeof updateGstAttachmentRequirement === 'function') updateGstAttachmentRequirement();
+        if (typeof updateMsmeAttachmentRequirement === 'function') updateMsmeAttachmentRequirement();
+        if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+
+      } catch (err) {
+        showVerificationLoading(false);
+        blockAccess(
+          "Connection Error", 
+          "Unable to verify credentials with the authentication server. Please check your network connection and retry."
+        );
+      }
     });
 
-    // Helper function to block the screen
-    function blockAccess(title, message) {
-      document.getElementById('blockedTitle').innerText = title;
-      document.getElementById('blockedMessage').innerText = message;
-      document.getElementById('blockedRef').innerText = `Ref: ${verifiedAppNo || 'No Token Provided'}`;
-      document.getElementById('accessBlockedModal').classList.remove('hidden');
-      document.getElementById('vendorForm').style.pointerEvents = 'none';
-      document.getElementById('vendorForm').style.opacity = '0.3';
-      lucide.createIcons();
+    // Helper: Dim form during backend validation
+    function showVerificationLoading(isLoading) {
+      const form = document.getElementById('vendorForm');
+      if (!form) return;
+      if (isLoading) {
+        form.style.opacity = '0.3';
+        form.style.pointerEvents = 'none';
+      } else {
+        form.style.opacity = '1';
+        form.style.pointerEvents = 'auto';
+      }
     }
 
+    // Helper: Show security blocked screen
+    function blockAccess(title, message) {
+      const titleElem = document.getElementById('blockedTitle');
+      const msgElem = document.getElementById('blockedMessage');
+      const refElem = document.getElementById('blockedRef');
+      const modal = document.getElementById('accessBlockedModal');
+      const form = document.getElementById('vendorForm');
+
+      if (titleElem) titleElem.innerText = title;
+      if (msgElem) msgElem.innerText = message;
+      if (refElem) refElem.innerText = `Ref: ${verifiedAppNo || 'No Token Provided'}`;
+      if (modal) modal.classList.remove('hidden');
+
+      if (form) {
+        form.style.pointerEvents = 'none';
+        form.style.opacity = '0.15';
+      }
+      if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+    }
+    
     // Acknowledgement Number synchronization across all inputs
     function syncAckNumber(val) {
       const upperVal = val.toUpperCase();
