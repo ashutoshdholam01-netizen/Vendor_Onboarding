@@ -942,7 +942,7 @@
         const response = await fetch(VERIFY_ENDPOINT_URL, {
           method: 'POST',
           headers: {
-            'Content-Type': 'text/plain'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             appNo: verifiedAppNo,
