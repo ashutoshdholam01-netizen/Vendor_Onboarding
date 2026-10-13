@@ -937,12 +937,12 @@
       // Gray out the form while verifying against Excel
       showVerificationLoading(true);
 
-      try {
-        // 3. Make real-time verification call to Power Automate
+    try {
+        // 3. Post verification payload using text/plain to bypass CORS preflight
         const response = await fetch(VERIFY_ENDPOINT_URL, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'text/plain'
           },
           body: JSON.stringify({
             appNo: verifiedAppNo,
@@ -951,7 +951,7 @@
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const result = await response.json();
@@ -993,12 +993,13 @@
         if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
 
       } catch (err) {
+        console.error("Verification failed:", err);
         showVerificationLoading(false);
         blockAccess(
           "Connection Error", 
-          "Unable to verify credentials with the authentication server. Please check your network connection and retry."
+          `Unable to verify credentials: ${err.name} (${err.message}). Check console for details.`
         );
-      }
+      }  
     });
 
     // Helper: Dim form during backend validation
